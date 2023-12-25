@@ -1,0 +1,67 @@
+# version của docker-compose
+version: "3"
+
+# Định nghĩ network
+networks:
+  # Tên netwwork
+  my-network:
+    driver: bridge
+
+# Định nghĩa các ổ đĩa
+volumes:
+  # Tên volume
+  dir-site:
+    driver_opts:
+      device: /mycode/sites
+      o: bind
+
+# Định nghĩa các dịch vụ
+services:
+  # container PHP
+  my-php:
+    # Tên container
+    container_name: php-product
+    build:
+      # Build từ Dockerfile - tên file
+      dockerfile: Dockerfile
+      # Nạp file docker từ thư mục php
+      context: ./php/
+    hostname: php
+    restart: always
+    networks:
+      - my-network
+    volumes:
+      - dir-site:/home/sites
+    
+  # container HTTPD
+  my-httpd:
+    container_name: c-httpd1
+    image: "httpd:latest"
+    hostname: httpd
+    restart: always
+    networks:
+      - my-network
+    volumes:
+      - dir-site:/home/sites
+      - ./htpd.conf:/usr/local/apche2/conf/httpd.conf
+    ports:
+      # 9999 là port máy host, 80 là port container
+      - "9999:80"
+      - "443:443"
+
+  # container MySQL
+  my-mysql:
+    container_name: mysql-product
+    image: "mysql:latest"
+    hostname: mysql
+    restart: always
+    networks:
+      - my-network
+    volumes:
+      - ./db:/var/lib/mysql
+      - ./my.cnf:/etc/mysql/my.cnf
+    environment:
+      - MYSQL_ROOT_PASSWORD=123abc
+      - MYSQL_DATABSE=db_site
+      - MYSQL_USER=siteuser
+      - MYSQL_PASSWORD=sitepass
